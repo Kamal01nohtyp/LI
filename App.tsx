@@ -5,9 +5,12 @@ import { StatusBadge } from './StatusBadge';
 import { analyzeIssue } from './geminiService';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { translations, Language } from './translations';
-import { Plus, Search, Trash2, BrainCircuit, Calendar, User as UserIcon, Loader2, Sparkles, Globe, Database } from 'lucide-react';
+import { AuthPage } from './AuthPage';
+import { Plus, Search, Trash2, BrainCircuit, Calendar, User as UserIcon, Loader2, Sparkles, Globe, Database, LogOut } from 'lucide-react';
+import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -18,13 +21,32 @@ const App: React.FC = () => {
 
   const t = translations[lang];
 
-  // Fetch issues from Supabase
-  const fetchIssues = async () => {
+  // Check Auth Session
+  useEffect(() => {
     if (!isSupabaseConfigured()) {
       setIsLoading(false);
       setDbError(true);
       return;
     }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (!session) setIsLoading(false); // Stop loading if no session to show auth screen
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fetch issues from Supabase
+  const fetchIssues = async () => {
+    if (!isSupabaseConfigured() || !session) return;
 
     try {
       const { data, error } = await supabase
@@ -56,23 +78,24 @@ const App: React.FC = () => {
     }
   };
 
-  // Real-time subscription
+  // Real-time subscription & Fetch triggers
   useEffect(() => {
-    fetchIssues();
+    if (session) {
+      setIsLoading(true);
+      fetchIssues();
 
-    if (!isSupabaseConfigured()) return;
+      const channel = supabase
+        .channel('issues_changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, () => {
+          fetchIssues(); // Refresh data on any change
+        })
+        .subscribe();
 
-    const channel = supabase
-      .channel('issues_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'issues' }, () => {
-        fetchIssues(); // Refresh data on any change
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [session]);
 
   const handleAddIssue = async (title: string, description: string, responsibleId: string) => {
     if (!isSupabaseConfigured()) return;
@@ -162,6 +185,10 @@ const App: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
   const getResponsiblePerson = (id: string): ResponsiblePerson | undefined => {
     return MOCK_PEOPLE.find(p => p.id === id);
   };
@@ -204,6 +231,10 @@ alter publication supabase_realtime add table issues;`}
     );
   }
 
+  if (!session) {
+    return <AuthPage lang={lang} setLang={setLang} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F7] text-[#1D1D1F]">
       {/* Header */}
@@ -216,13 +247,13 @@ alter publication supabase_realtime add table issues;`}
             <h1 className="text-xl font-semibold tracking-tight text-gray-900">{t.appTitle}</h1>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <button
               onClick={toggleLanguage}
               className="flex items-center space-x-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-600 transition-colors"
             >
               <Globe size={14} />
-              <span>{lang.toUpperCase()}</span>
+              <span className="hidden sm:inline">{lang.toUpperCase()}</span>
             </button>
 
             <button 
@@ -231,6 +262,14 @@ alter publication supabase_realtime add table issues;`}
             >
               <Plus size={16} />
               <span className="hidden sm:inline">{t.newIssue}</span>
+            </button>
+
+             <button
+              onClick={handleLogout}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title={t.buttons.logout}
+            >
+              <LogOut size={20} />
             </button>
           </div>
         </div>

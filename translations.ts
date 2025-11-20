@@ -18,7 +18,8 @@ export const translations = {
       delete: "Delete Issue",
       aiSuggest: "Get AI Suggestion",
       cancel: "Cancel",
-      create: "Create Record"
+      create: "Create Record",
+      logout: "Sign Out"
     },
     modal: {
       title: "New Issue Record",
@@ -36,7 +37,20 @@ export const translations = {
       [IssueStatus.DONE]: "Done",
       [IssueStatus.STUCK]: "Stuck"
     },
-    confirmDelete: "Are you sure you want to delete this record?"
+    confirmDelete: "Are you sure you want to delete this record?",
+    auth: {
+      welcome: "Welcome to LiquidTrack",
+      subtitle: "Manage your logistics efficiently.",
+      emailLabel: "Email address",
+      passwordLabel: "Password",
+      signIn: "Sign In",
+      signUp: "Sign Up",
+      noAccount: "Don't have an account?",
+      hasAccount: "Already have an account?",
+      microsoftBtn: "Continue with Microsoft",
+      loading: "Processing...",
+      errorParams: "Please check your email and password."
+    }
   },
   ru: {
     appTitle: "LiquidTrack",
@@ -55,7 +69,8 @@ export const translations = {
       delete: "Удалить",
       aiSuggest: "Анализ AI",
       cancel: "Отмена",
-      create: "Создать запись"
+      create: "Создать запись",
+      logout: "Выйти"
     },
     modal: {
       title: "Новая запись о проблеме",
@@ -73,7 +88,20 @@ export const translations = {
       [IssueStatus.DONE]: "Готово",
       [IssueStatus.STUCK]: "Проблема"
     },
-    confirmDelete: "Вы уверены, что хотите удалить эту запись?"
+    confirmDelete: "Вы уверены, что хотите удалить эту запись?",
+    auth: {
+      welcome: "Добро пожаловать",
+      subtitle: "Управляйте логистикой эффективно.",
+      emailLabel: "Email адрес",
+      passwordLabel: "Пароль",
+      signIn: "Войти",
+      signUp: "Регистрация",
+      noAccount: "Нет аккаунта?",
+      hasAccount: "Уже есть аккаунт?",
+      microsoftBtn: "Войти через Microsoft",
+      loading: "Обработка...",
+      errorParams: "Пожалуйста, проверьте email и пароль."
+    }
   }
 };
 
